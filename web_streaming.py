@@ -4,7 +4,7 @@
 	A Simple mjpg stream http server
 '''
 import cv2
-import Image
+from PIL import Image
 import threading
 from BaseHTTPServer import BaseHTTPRequestHandler,HTTPServer
 from SocketServer import ThreadingMixIn
@@ -52,24 +52,20 @@ class CamHandler(BaseHTTPRequestHandler):
 class ThreadedHTTPServer(ThreadingMixIn, HTTPServer):
 	"""Handle requests in a separate thread."""
 
-def main(cap):
-	global capture
-	ip = "0.0.0.0"
-	capture = cap
-	#capture = cv2.VideoCapture(0)
-	#capture.set(cv2.cv.CV_CAP_PROP_FRAME_WIDTH, 320); 
-	#capture.set(cv2.cv.CV_CAP_PROP_FRAME_HEIGHT, 240);
-	#capture.set(cv2.cv.CV_CAP_PROP_SATURATIn ON,0.2);
-	global img
-	try:
-		server = ThreadedHTTPServer((ip, 8888), CamHandler)
-		print "server started"
-		server.serve_forever()
-	except KeyboardInterrupt:
-		capture.release()
-		server.socket.close()
-	
+class WebStreamer(threading.Thread):
+	def __init__(self,cap):
+		super(WebStreamer,self).__init__()
+		global capture
+		ip = "0.0.0.0"
+		capture = cap
+		global img
+		self.server = ThreadedHTTPServer((ip, 8888), CamHandler)
+		print ("server started")
 
+	def run(self):
+		self.server.serve_forever()
 
-if __name__ == '__main__':
-	main(cap)
+	def stop(self):
+		print("WebStreamer sutting down")
+		self.server.shutdown()
+
